@@ -32,7 +32,7 @@ userhooks = simpleUserHooks
 -- Install and copy hooks are default, but amended with .agdai files in data-files.
 instHook' :: PackageDescription -> LocalBuildInfo -> UserHooks -> InstallFlags -> IO ()
 instHook' pd lbi hooks flags = instHook simpleUserHooks pd' lbi hooks flags where
-  pd' = pd { dataFiles = concatMap expandAgdaExt $ dataFiles pd }
+  pd' = pd -- { dataFiles = concatMap expandAgdaExt $ dataFiles pd }
 
 -- Andreas, 2020-04-25, issue #4569: defer 'generateInterface' until after
 -- the library has been copied to a destination where it can be found.
@@ -41,11 +41,13 @@ copyHook' :: PackageDescription -> LocalBuildInfo -> UserHooks -> CopyFlags -> I
 copyHook' pd lbi hooks flags = do
   -- Copy library and executable etc.
   copyHook simpleUserHooks pd lbi hooks flags
-  unless (skipInterfaces lbi) $ do
-    -- Generate .agdai files.
-    generateInterfaces pd lbi
-    -- Copy again, now including the .agdai files.
-    copyHook simpleUserHooks pd' lbi hooks flags
+  return ()
+
+  -- unless (skipInterfaces lbi) $ do
+  --   -- Generate .agdai files.
+  --   generateInterfaces pd lbi
+  --   -- Copy again, now including the .agdai files.
+  --   copyHook simpleUserHooks pd' lbi hooks flags
   where
   pd' = pd
     { dataFiles = concatMap expandAgdaExt $ dataFiles pd

@@ -1,61 +1,66 @@
+# SPDX-FileCopyrightText: 2021 Serokell <https://serokell.io/>
+#
+# SPDX-License-Identifier: CC0-1.0
+
 {
-  description = "Agda is a dependently typed programming language / interactive theorem prover.";
+  description = "My haskell application";
 
-  inputs.flake-utils.url = "github:numtide/flake-utils";
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/038b2922be3fc096e1d456f93f7d0f4090628729";
 
-  outputs = { self, nixpkgs, flake-utils }: (flake-utils.lib.eachDefaultSystem (system: let
-    pkgs = import nixpkgs { inherit system; overlays = [ self.overlay ]; };
-  in {
-    packages = {
-      inherit (pkgs.haskellPackages) Agda;
-
-      # TODO agda2-mode
-    };
-
-    defaultPackage = self.packages.${system}.Agda;
-
-    devShell = pkgs.haskellPackages.shellFor {
-      packages = ps: with ps; [ Agda ];
-      nativeBuildInputs = with pkgs; [
-        cabal-install
-        haskell-language-server
-        haskellPackages.fix-whitespace
-
-        # documentation
-        (python3.withPackages (ps: with ps; [
-          sphinx
-          sphinx_rtd_theme
-        ]))
-      ];
-    };
-  })) // {
-    overlay = final: prev: {
-      haskellPackages = prev.haskellPackages.override {
-        overrides = self.haskellOverlay;
-      };
-    };
-
-    haskellOverlay = final: prev: let
-      inherit (final) callCabal2nixWithOptions;
-
-      shortRev = builtins.substring 0 9 self.rev;
-
-      postfix = if self ? revCount then "${toString self.revCount}_${shortRev}" else "Dirty";
-    in {
-      # TODO use separate evaluation system?
-      Agda = callCabal2nixWithOptions "Agda" ./. "--flag enable-cluster-counting --flag optimise-heavily" ({
-        mkDerivation = args: final.mkDerivation (args // {
-          version = "${args.version}-pre${postfix}";
-
-          postInstall = "$out/bin/agda-mode compile";
-
-          # TODO Make check phase work
-          # At least requires:
-          #   Setting AGDA_BIN (or using the Makefile, which at least requires cabal-install)
-          #   Making agda-stdlib available (or disabling the relevant tests somehow)
-          doCheck = false;
-        });
-      });
-    };
+    flake-utils.url = "github:numtide/flake-utils";
   };
+
+  outputs = { self, nixpkgs, flake-utils }:
+    flake-utils.lib.eachDefaultSystem (system:
+      let
+        pkgs = nixpkgs.legacyPackages.${system};
+
+        jailbreakUnbreak = pkg:
+          pkgs.haskell.lib.doJailbreak (pkg.overrideAttrs (_: { meta = { }; }));
+
+        # DON'T FORGET TO PUT YOUR PACKAGE NAME HERE, REMOVING `throw`
+        packageName = "agda";
+
+        generatedPackage =
+        (
+          pkgs.haskellPackages.callCabal2nix "Agda-determi-io-build" self rec
+          {
+            # Dependency overrides go here
+          }
+        );
+
+        generatedPackage2 = pkgs.haskell.lib.overrideCabal generatedPackage (drv: {
+          doHoogle = false;
+          doHaddock = false;
+          doCheck = false;
+          # isLibrary = false;
+          # enableSharedLibraries = false;
+          enableStaticLibraries = false;
+          enableLibraryProfiling = false;
+          enableExecutableProfiling = false;
+          # postInstall = "";
+          # ''
+          #   $out/bin/agda -c --no-main $(find $data/share -name Primitive.agda)
+          # '';
+        });
+
+        # xxxx = throw generatedPackage.testHaskellDepends;
+
+      in {
+        packages.${packageName} = generatedPackage2;
+
+        packages.default = self.packages.${system}.${packageName};
+        defaultPackage = self.packages.${system}.default;
+
+        devShells.default = pkgs.mkShell {
+          buildInputs = with pkgs; [
+            pkgs.haskellPackages.haskell-language-server # you must build it with your ghc to work
+            ghcid
+            cabal-install
+          ];
+          inputsFrom = map (__getAttr "env") (__attrValues self.packages.${system});
+        };
+        devShell = self.devShells.${system}.default;
+      });
 }

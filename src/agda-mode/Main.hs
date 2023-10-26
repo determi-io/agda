@@ -21,25 +21,26 @@ import System.IO
 -- import System.IO.Error (isDoesNotExistError)
 import System.Process
 
-import Paths_Agda (getDataDir, version)
+import Paths_AgdaJustBin (getDataDir, version)
 
 -- | The program.
 
 main :: IO ()
 main = do
-  prog <- getProgName
-  args <- getArgs
-  case args of
-    [arg] | arg == locateFlag -> printEmacsModeFile
-          | arg == setupFlag  -> do
-             dotEmacs <- findDotEmacs
-             setupDotEmacs (Files { thisProgram = prog
-                                  , dotEmacs    = dotEmacs
-                                  })
-          | arg == compileFlag ->
-             compileElispFiles
-    _  -> do inform usage
-             exitFailure
+  return ()
+  -- prog <- getProgName
+  -- args <- getArgs
+  -- case args of
+  --   [arg] | arg == locateFlag -> printEmacsModeFile
+  --         | arg == setupFlag  -> do
+  --            dotEmacs <- findDotEmacs
+  --            setupDotEmacs (Files { thisProgram = prog
+  --                                 , dotEmacs    = dotEmacs
+  --                                 })
+  --         | arg == compileFlag ->
+  --            compileElispFiles
+  --   _  -> do inform usage
+  --            exitFailure
 
 -- Command line options.
 
