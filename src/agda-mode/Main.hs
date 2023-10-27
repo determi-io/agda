@@ -21,7 +21,7 @@ import System.IO
 -- import System.IO.Error (isDoesNotExistError)
 import System.Process
 
-import Paths_AgdaJustBin (getDataDir, version)
+import Paths_Agda (getDataDir, version)
 
 -- | The program.
 
