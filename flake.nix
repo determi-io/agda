@@ -96,13 +96,14 @@
           #
           # We revert those here, because a clean build is enough,
           # and we don't want the emacs-mode and neither emacs itself.
-          postInstall = "";
-          executableToolDepends = [ ];
-
           # postInstall = "";
-          # ''
-          #   $out/bin/agda -c --no-main $(find $data/share -name Primitive.agda)
-          # '';
+          executableToolDepends = [ ];
+          postInstall =
+          ''
+            rm -r $out/lib
+          '';
+
+            # $out/bin/agda -c --no-main $(find $data/share -name Primitive.agda)
         });
 
         # xxxx = throw generatedPackage.testHaskellDepends;
